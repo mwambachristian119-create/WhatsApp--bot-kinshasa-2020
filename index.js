@@ -1,4 +1,3 @@
-cat << 'EOF' > index.js
 import qrcode from 'qrcode-terminal';
 import pkg from 'whatsapp-web.js';
 
@@ -49,7 +48,7 @@ client.on('message', async (msg) => {
                   `✍️ *Posez votre question directement ou tapez un chiffre !*`;
     }
 
-    // 3. SERVICES & PRODUCTS
+    // 3. SERVICES & PRODUITS
     else if (texte === '1' || texte.includes('service') || texte.includes('produit') || texte.includes('catalogue') || texte.includes('offre')) {
         reponse = `🛍️ *NOS SERVICES & PRODUITS*\n\n` +
                   `Nous proposons une gamme complète de solutions adaptées à vos besoins :\n` +
@@ -105,7 +104,7 @@ client.on('message', async (msg) => {
                   `Veuillez nous laisser votre message détaillé ou votre numéro de téléphone ci-dessous. 📝`;
     }
 
-    // 9. RÉPONSE PAR DÉFAUT (SI NON COMPRIS)
+    // 9. RÉPONSE PAR DÉFAUT
     else {
         reponse = `🤖 *Assistant Virtuel*\n\n` +
                   `Je n'ai pas bien compris votre message.\n\n` +
@@ -117,4 +116,4 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-EOF
+        
