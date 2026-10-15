@@ -56,22 +56,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Cache des images pour un envoi instantané
-const imageCache = new Map();
-
-function obtenirMediaFormate(chemin) {
-    if (imageCache.has(chemin)) {
-        return imageCache.get(chemin);
-    }
-    if (fs.existsSync(chemin)) {
-        const media = MessageMedia.fromFilePath(chemin);
-        imageCache.set(chemin, media);
-        return media;
-    }
-    return null;
-}
-
-// Fonction d'envoi rapide des produits
+// Fonction d'envoi ultra-sécurisée en Base64
 async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
     const extensions = ['.jfif', '.jpg', '.JPG', '.png', '.jpeg'];
     let cheminTrouve = null;
@@ -91,10 +76,15 @@ async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
 
     if (cheminTrouve) {
         try {
-            const media = obtenirMediaFormate(cheminTrouve);
-            await client.sendMessage(msg.from, media, { caption: description + noteLivraison, sendMediaAsDocument: false });
+            const bitmap = fs.readFileSync(cheminTrouve);
+            const base64Data = bitmap.toString('base64');
+            let mimeType = 'image/jpeg';
+            if (cheminTrouve.endsWith('.png')) mimeType = 'image/png';
+
+            const media = new MessageMedia(mimeType, base64Data, path.basename(cheminTrouve));
+            await client.sendMessage(msg.from, media, { caption: description + noteLivraison });
         } catch (error) {
-            console.error("Erreur d'envoi média :", error);
+            console.error("Erreur d'envoi média en base64, envoi du texte seul :", error);
             await client.sendMessage(msg.from, description + noteLivraison);
         }
     } else {
@@ -149,7 +139,7 @@ client.on('message', async (msg) => {
         );
     }
 
-    // MENU PRINCIPAL (Sans option livraison)
+    // MENU PRINCIPAL
     if (texte === 'menu' || texte === 'options' || texte === 'aide') {
         return client.sendMessage(msg.from, 
             `📋 *MENU - CHRISTECH BUSINESS*\n` +
@@ -224,7 +214,7 @@ client.on('message', async (msg) => {
     }
 
     if (texte === '22') {
-        const desc = `⌨️ *CLAVIER SANS FIL (SANS FIL)*\n` +
+        const desc = `⌨️ *CLAVIER SANS FIL*\n` +
                      `-----------------------------------\n` +
                      `💵 *Prix* : **22 $**\n\n` +
                      `• **Connexion** : Récepteur USB Nano 2.4GHz (Portée 10m)\n` +
@@ -301,4 +291,4 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-    
+        
