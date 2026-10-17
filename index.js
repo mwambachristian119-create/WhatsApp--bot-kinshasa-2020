@@ -57,16 +57,17 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Fonction générique d'envoi de fiche produit avec invitation à voir le catalogue
+// Fonction générique d'envoi de fiche produit avec le taux de 2300 FC
 async function envoyerProduitAvecCatalogue(msg, description) {
     const noteCatalogue = `\n\n` +
                           `📸 *POUR VOIR LES PHOTOS EN HIGH QUALITY :*\n` +
                           `👉 Cliquez sur le profil de **Christech Business** puis sur l'icône **Catalogue 🛍️** en haut de la discussion !\n\n` +
                           `-----------------------------------\n` +
                           `🛍️ *COMMENT ACHETER ?*\n` +
-                          `1️⃣ **Livraison** : 5$ partout à Kinshasa.\n` +
-                          `2️⃣ **Retrait sur place** : Directement à notre bureau.\n` +
+                          `1️⃣ **Livraison** : 5$ (11.500 FC) partout à Kinshasa.\n` +
+                          `2️⃣ **Retrait sur place** : Directement à notre bureau (Gratuit).\n` +
                           `${ADRESSE_BOUTIQUE}\n\n` +
+                          `💱 *Taux du jour appliqué : 1 $ = 2.300 FC*\n` +
                           `✍️ *Tapez 5 pour parler à un conseiller et valider votre commande.*`;
 
     await client.sendMessage(msg.from, description + noteCatalogue);
@@ -104,7 +105,7 @@ client.on('message', async (msg) => {
             `Merci d'avoir choisi *Christech Business* !\n` +
             `Un conseiller prend le relais pour enregistrer votre commande.\n\n` +
             `${ADRESSE_BOUTIQUE}\n` +
-            `🚚 *Livraison* : 5$ partout à Kinshasa.\n\n` +
+            `🚚 *Livraison* : 5$ (11.500 FC) partout à Kinshasa.\n\n` +
             `Indiquez à notre conseiller si vous optez pour la **livraison** ou le **retrait au bureau**, ainsi que votre adresse exacte ! 📝`
         );
     }
@@ -115,7 +116,8 @@ client.on('message', async (msg) => {
             `👋 *Bonjour et bienvenue chez Christech Business !*\n\n` +
             `Vente d'appareils et matériel informatique de qualité à Kinshasa. 💻🖱️\n\n` +
             `${ADRESSE_BOUTIQUE}\n\n` +
-            `🚚 *Livraison* : 5$ dans toutes les communes de Kinshasa ou retrait gratuit au bureau.\n` +
+            `💵 *Taux du jour* : 1 $ = 2.300 FC\n` +
+            `🚚 *Livraison* : 5$ (11.500 FC) dans toutes les communes de Kinshasa ou retrait gratuit au bureau.\n` +
             `📸 *Catalogue photos* : Retrouvez nos produits en photo dans notre catalogue WhatsApp !\n\n` +
             `Tapez *menu* pour consulter nos produits et tarifs !`
         );
@@ -151,7 +153,7 @@ client.on('message', async (msg) => {
     if (texte === '11') {
         const desc = `💻 *ORDINATEUR PORTABLE HP ELITEBOOK*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **280 $**\n\n` +
+                     `💵 *Prix* : **280 $** *(soit 644.000 FC)*\n\n` +
                      `• **Processeur** : Intel Core i5 (8ème gén.)\n` +
                      `• **RAM** : 8 GB DDR4\n` +
                      `• **Stockage** : 256 GB SSD (Ultra rapide)\n` +
@@ -164,7 +166,7 @@ client.on('message', async (msg) => {
     if (texte === '12') {
         const desc = `💻 *ORDINATEUR PORTABLE LENOVO THINKPAD*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **310 $**\n\n` +
+                     `💵 *Prix* : **310 $** *(soit 713.000 FC)*\n\n` +
                      `• **Processeur** : Intel Core i5 Ultra Robuste\n` +
                      `• **RAM** : 8 GB DDR4\n` +
                      `• **Stockage** : 256 GB SSD\n` +
@@ -188,7 +190,7 @@ client.on('message', async (msg) => {
     if (texte === '21') {
         const desc = `⌨️ *CLAVIER USB AVEC FIL*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **12 $**\n\n` +
+                     `💵 *Prix* : **12 $** *(soit 27.600 FC)*\n\n` +
                      `• **Type** : AZERTY / QWERTY Standard\n` +
                      `• **Connexion** : USB Plug & Play\n` +
                      `• **Points forts** : Touches douces, silencieuses et très résistantes. Idéal pour la bureautique.`;
@@ -198,7 +200,7 @@ client.on('message', async (msg) => {
     if (texte === '22') {
         const desc = `⌨️ *CLAVIER SANS FIL*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **22 $**\n\n` +
+                     `💵 *Prix* : **22 $** *(soit 50.600 FC)*\n\n` +
                      `• **Connexion** : Récepteur USB Nano 2.4GHz (Portée 10m)\n` +
                      `• **Design** : Ergonomique et ultra-fin\n` +
                      `• **Autonomie** : Longue durée avec piles AAA`;
@@ -219,7 +221,7 @@ client.on('message', async (msg) => {
     if (texte === '31') {
         const desc = `🖱️ *SOURIS OPTIQUE USB (AVEC FIL)*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **6 $**\n\n` +
+                     `💵 *Prix* : **6 $** *(soit 13.800 FC)*\n\n` +
                      `• **Capteur** : Optique haute précision (1200 DPI)\n` +
                      `• **Connexion** : Câble USB robuste\n` +
                      `• **Compatibilité** : Windows, Mac, Linux`;
@@ -229,7 +231,7 @@ client.on('message', async (msg) => {
     if (texte === '32') {
         const desc = `🖱️ *SOURIS SANS FIL ERGONOMIQUE*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **12 $**\n\n` +
+                     `💵 *Prix* : **12 $** *(soit 27.600 FC)*\n\n` +
                      `• **Connexion** : Sans fil 2.4 GHz avec mini récepteur USB\n` +
                      `• **Sensibilité** : Réglable (800 / 1200 / 1600 DPI)\n` +
                      `• **Avantage** : Mode mise en veille automatique pour économiser la batterie.`;
@@ -250,7 +252,7 @@ client.on('message', async (msg) => {
     if (texte === '41') {
         const desc = `🧰 *KIT D'OUTILLAGE RÉSEAU PROFESSIONNEL*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **35 $**\n\n` +
+                     `💵 *Prix* : **35 $** *(soit 80.500 FC)*\n\n` +
                      `• **Contenu** : Pince à sertir RJ45/RJ11, Testeur de câble, Dénudeur, Connecteurs RJ45.\n` +
                      `• **Usage** : Idéal pour techniciens, télécoms et réseaux.`;
         return envoyerProduitAvecCatalogue(msg, desc);
@@ -259,7 +261,7 @@ client.on('message', async (msg) => {
     if (texte === '42') {
         const desc = `🔌 *CÂBLE RÉSEAU ETHERNET RJ45 (CAT 6)*\n` +
                      `-----------------------------------\n` +
-                     `💵 *Prix* : **0.8 $ / mètre** (ou rouleau disponible)\n\n` +
+                     `💵 *Prix* : **0.8 $ / mètre** *(soit 1.840 FC / mètre)*\n\n` +
                      `• **Débit** : Haut débit Gigabit 1000 Mbps\n` +
                      `• **Usage** : Connexion internet stable pour routeurs, PC, Switch et caméras.`;
         return envoyerProduitAvecCatalogue(msg, desc);
@@ -274,4 +276,4 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-            
+        
