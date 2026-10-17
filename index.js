@@ -59,7 +59,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Fonction d'envoi sécurisée avec gestion de secours
+// Fonction d'envoi robuste à prueba de fallos
 async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
     const extensions = ['.jfif', '.jpg', '.JPG', '.png', '.jpeg'];
     let cheminTrouve = null;
@@ -93,19 +93,19 @@ async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
             let mimeType = 'image/jpeg';
             if (cheminTrouve.toLowerCase().endsWith('.png')) mimeType = 'image/png';
 
-            const media = new MessageMedia(mimeType, base64Image);
+            // Utilisation sécurisée du MessageMedia
+            const media = new MessageMedia(mimeType, base64Image, 'image.jpg');
 
-            await client.sendMessage(msg.from, media, { caption: texteFinal }).catch(async (err) => {
-                console.error("Erreur envoi média Puppeteer, envoi du texte de secours :", err.message);
-                await client.sendMessage(msg.from, texteFinal);
-            });
-            console.log(`🖼️ [PRODUIT DEMANDÉ] Image : ${cheminTrouve}`);
+            // On tente d'envoyer l'image avec sa légende
+            await client.sendMessage(msg.from, media, { caption: texteFinal });
+            console.log(`🖼️ [IMAGE ENVOYÉE SANS ERREUR] : ${cheminTrouve}`);
         } catch (error) {
-            console.error("Erreur lecture fichier :", error.message);
+            console.error("⚠️ Envoi image échoué (limite Puppeteer). Envoi du texte :", error.message);
+            // En cas de blocage d'image par WhatsApp Web, on envoie la fiche technique texte immédiatement
             await client.sendMessage(msg.from, texteFinal);
         }
     } else {
-        console.log(`⚠️ Aucune image trouvée pour : ${nomsPossibles.join(', ')}`);
+        console.log(`⚠️ Aucune image trouvée dans ./images pour : ${nomsPossibles.join(', ')}`);
         await client.sendMessage(msg.from, texteFinal);
     }
 }
@@ -170,7 +170,7 @@ client.on('message', async (msg) => {
             `👤 5️⃣ *Parler à un conseiller / Valider une commande*\n` +
             `-----------------------------------\n` +
             `${ADRESSE_BOUTIQUE}\n\n` +
-            `✍️ *Répondez avec un numéro (1, 2, 3...) pour voir nos articles en photo !*`
+            `✍️ *Répondez avec un numéro (1, 2, 3...) pour voir nos articles !*`
         );
     }
 
@@ -218,7 +218,7 @@ client.on('message', async (msg) => {
             `Choisissez votre type de clavier :\n\n` +
             `21️⃣ *Clavier USB avec fil*\n` +
             `22️⃣ *Clavier Sans Fil (Bluetooth / 2.4G)*\n\n` +
-            `👉 *Tapez 21 ou 22 pour voir la photo et les détails.*`
+            `👉 *Tapez 21 ou 22 pour voir les détails.*`
         );
     }
 
@@ -249,7 +249,7 @@ client.on('message', async (msg) => {
             `Choisissez votre type de souris :\n\n` +
             `31️⃣ *Souris Optique avec fil*\n` +
             `32️⃣ *Souris Ergonomique Sans Fil*\n\n` +
-            `👉 *Tapez 31 ou 32 pour voir la photo et les détails.*`
+            `👉 *Tapez 31 ou 32 pour faire votre choix.*`
         );
     }
 
@@ -280,7 +280,7 @@ client.on('message', async (msg) => {
             `Choisissez un article :\n\n` +
             `41️⃣ *Kit complet outillage réseau (Pince, Testeur...)*\n` +
             `42️⃣ *Câble Réseau Ethernet RJ45 High Speed*\n\n` +
-            `👉 *Tapez 41 ou 42 pour voir la photo.*`
+            `👉 *Tapez 41 ou 42 pour voir les détails.*`
         );
     }
 
@@ -311,4 +311,3 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-                                       
