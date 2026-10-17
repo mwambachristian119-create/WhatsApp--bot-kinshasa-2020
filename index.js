@@ -59,7 +59,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Fonction d'envoi avec photo, description et options de livraison/bureau
+// Fonction d'envoi sécurisée avec gestion de secours
 async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
     const extensions = ['.jfif', '.jpg', '.JPG', '.png', '.jpeg'];
     let cheminTrouve = null;
@@ -89,12 +89,19 @@ async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
         try {
             const fileData = fs.readFileSync(cheminTrouve);
             const base64Image = fileData.toString('base64');
-            const media = new MessageMedia('image/jpeg', base64Image, 'produit.jpg');
+            
+            let mimeType = 'image/jpeg';
+            if (cheminTrouve.toLowerCase().endsWith('.png')) mimeType = 'image/png';
 
-            await client.sendMessage(msg.from, media, { caption: texteFinal });
-            console.log(`🖼️ [IMAGE ENVOYÉE] : ${cheminTrouve}`);
+            const media = new MessageMedia(mimeType, base64Image);
+
+            await client.sendMessage(msg.from, media, { caption: texteFinal }).catch(async (err) => {
+                console.error("Erreur envoi média Puppeteer, envoi du texte de secours :", err.message);
+                await client.sendMessage(msg.from, texteFinal);
+            });
+            console.log(`🖼️ [PRODUIT DEMANDÉ] Image : ${cheminTrouve}`);
         } catch (error) {
-            console.error("Erreur envoi image :", error);
+            console.error("Erreur lecture fichier :", error.message);
             await client.sendMessage(msg.from, texteFinal);
         }
     } else {
@@ -304,4 +311,4 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-            
+                                       
