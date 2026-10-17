@@ -1,10 +1,8 @@
 import express from 'express';
 import qrcode from 'qrcode';
 import pkg from 'whatsapp-web.js';
-import fs from 'fs';
-import path from 'path';
 
-const { Client, LocalAuth, MessageMedia } = pkg;
+const { Client, LocalAuth } = pkg;
 const app = express();
 const port = 3000;
 
@@ -59,55 +57,19 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Fonction d'envoi robuste à prueba de fallos
-async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
-    const extensions = ['.jfif', '.jpg', '.JPG', '.png', '.jpeg'];
-    let cheminTrouve = null;
+// Fonction générique d'envoi de fiche produit avec invitation à voir le catalogue
+async function envoyerProduitAvecCatalogue(msg, description) {
+    const noteCatalogue = `\n\n` +
+                          `📸 *POUR VOIR LES PHOTOS EN HIGH QUALITY :*\n` +
+                          `👉 Cliquez sur le profil de **Christech Business** puis sur l'icône **Catalogue 🛍️** en haut de la discussion !\n\n` +
+                          `-----------------------------------\n` +
+                          `🛍️ *COMMENT ACHETER ?*\n` +
+                          `1️⃣ **Livraison** : 5$ partout à Kinshasa.\n` +
+                          `2️⃣ **Retrait sur place** : Directement à notre bureau.\n` +
+                          `${ADRESSE_BOUTIQUE}\n\n` +
+                          `✍️ *Tapez 5 pour parler à un conseiller et valider votre commande.*`;
 
-    for (const nom of nomsPossibles) {
-        for (const ext of extensions) {
-            const cheminTest = path.join('./images', nom + ext);
-            if (fs.existsSync(cheminTest)) {
-                cheminTrouve = cheminTest;
-                break;
-            }
-        }
-        if (cheminTrouve) break;
-    }
-
-    const optionsAchat = `\n\n` +
-                         `-----------------------------------\n` +
-                         `🛍️ *COMMENT ACHETER ?*\n` +
-                         `1️⃣ **Livraison** : 5$ partout à Kinshasa (reçu chez vous ou au bureau).\n` +
-                         `2️⃣ **Retrait sur place** : Venez directement à notre bureau.\n` +
-                         `${ADRESSE_BOUTIQUE}\n\n` +
-                         `✍️ *Tapez 5 pour parler à un conseiller et valider votre choix (livraison ou retrait).*`;
-
-    const texteFinal = description + optionsAchat;
-
-    if (cheminTrouve) {
-        try {
-            const fileData = fs.readFileSync(cheminTrouve);
-            const base64Image = fileData.toString('base64');
-            
-            let mimeType = 'image/jpeg';
-            if (cheminTrouve.toLowerCase().endsWith('.png')) mimeType = 'image/png';
-
-            // Utilisation sécurisée du MessageMedia
-            const media = new MessageMedia(mimeType, base64Image, 'image.jpg');
-
-            // On tente d'envoyer l'image avec sa légende
-            await client.sendMessage(msg.from, media, { caption: texteFinal });
-            console.log(`🖼️ [IMAGE ENVOYÉE SANS ERREUR] : ${cheminTrouve}`);
-        } catch (error) {
-            console.error("⚠️ Envoi image échoué (limite Puppeteer). Envoi du texte :", error.message);
-            // En cas de blocage d'image par WhatsApp Web, on envoie la fiche technique texte immédiatement
-            await client.sendMessage(msg.from, texteFinal);
-        }
-    } else {
-        console.log(`⚠️ Aucune image trouvée dans ./images pour : ${nomsPossibles.join(', ')}`);
-        await client.sendMessage(msg.from, texteFinal);
-    }
+    await client.sendMessage(msg.from, description + noteCatalogue);
 }
 
 client.on('message', async (msg) => {
@@ -153,7 +115,8 @@ client.on('message', async (msg) => {
             `👋 *Bonjour et bienvenue chez Christech Business !*\n\n` +
             `Vente d'appareils et matériel informatique de qualité à Kinshasa. 💻🖱️\n\n` +
             `${ADRESSE_BOUTIQUE}\n\n` +
-            `🚚 *Livraison* : 5$ dans toutes les communes de Kinshasa ou retrait gratuit au bureau.\n\n` +
+            `🚚 *Livraison* : 5$ dans toutes les communes de Kinshasa ou retrait gratuit au bureau.\n` +
+            `📸 *Catalogue photos* : Retrouvez nos produits en photo dans notre catalogue WhatsApp !\n\n` +
             `Tapez *menu* pour consulter nos produits et tarifs !`
         );
     }
@@ -181,7 +144,7 @@ client.on('message', async (msg) => {
             `Choisissez le modèle désiré :\n\n` +
             `11️⃣ *Ordinateur Portable HP EliteBook / ProBook*\n` +
             `12️⃣ *Ordinateur Portable Lenovo ThinkPad*\n\n` +
-            `👉 *Tapez 11 ou 12 pour voir la photo, le prix et les caractéristiques.*`
+            `👉 *Tapez 11 ou 12 pour voir le prix et les caractéristiques.*`
         );
     }
 
@@ -195,7 +158,7 @@ client.on('message', async (msg) => {
                      `• **Écran** : 14 pouces Full HD\n` +
                      `• **État** : Reconditionné propre, venu d'Europe\n` +
                      `• **Inclus** : Chargeur original + Garantie`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (7)', 'cable internet (6)', 'cable internet (8)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     if (texte === '12') {
@@ -208,7 +171,7 @@ client.on('message', async (msg) => {
                      `• **Écran** : 14 pouces anti-reflet\n` +
                      `• **Autonomie** : Batterie haute capacité (4h+)\n` +
                      `• **État** : Excellent état / Importé`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (9)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     // CATÉGORIE 2 : CLAVIERS (AVEC FIL / SANS FIL)
@@ -229,7 +192,7 @@ client.on('message', async (msg) => {
                      `• **Type** : AZERTY / QWERTY Standard\n` +
                      `• **Connexion** : USB Plug & Play\n` +
                      `• **Points forts** : Touches douces, silencieuses et très résistantes. Idéal pour la bureautique.`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (2)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     if (texte === '22') {
@@ -239,7 +202,7 @@ client.on('message', async (msg) => {
                      `• **Connexion** : Récepteur USB Nano 2.4GHz (Portée 10m)\n` +
                      `• **Design** : Ergonomique et ultra-fin\n` +
                      `• **Autonomie** : Longue durée avec piles AAA`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (3)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     // CATÉGORIE 3 : SOURIS (AVEC FIL / SANS FIL)
@@ -249,7 +212,7 @@ client.on('message', async (msg) => {
             `Choisissez votre type de souris :\n\n` +
             `31️⃣ *Souris Optique avec fil*\n` +
             `32️⃣ *Souris Ergonomique Sans Fil*\n\n` +
-            `👉 *Tapez 31 ou 32 pour faire votre choix.*`
+            `👉 *Tapez 31 ou 32 pour voir les détails.*`
         );
     }
 
@@ -260,7 +223,7 @@ client.on('message', async (msg) => {
                      `• **Capteur** : Optique haute précision (1200 DPI)\n` +
                      `• **Connexion** : Câble USB robuste\n` +
                      `• **Compatibilité** : Windows, Mac, Linux`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (10)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     if (texte === '32') {
@@ -270,7 +233,7 @@ client.on('message', async (msg) => {
                      `• **Connexion** : Sans fil 2.4 GHz avec mini récepteur USB\n` +
                      `• **Sensibilité** : Réglable (800 / 1200 / 1600 DPI)\n` +
                      `• **Avantage** : Mode mise en veille automatique pour économiser la batterie.`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (4)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     // CATÉGORIE 4 : MATÉRIEL RÉSEAU
@@ -290,7 +253,7 @@ client.on('message', async (msg) => {
                      `💵 *Prix* : **35 $**\n\n` +
                      `• **Contenu** : Pince à sertir RJ45/RJ11, Testeur de câble, Dénudeur, Connecteurs RJ45.\n` +
                      `• **Usage** : Idéal pour techniciens, télécoms et réseaux.`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet (5)'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     if (texte === '42') {
@@ -299,7 +262,7 @@ client.on('message', async (msg) => {
                      `💵 *Prix* : **0.8 $ / mètre** (ou rouleau disponible)\n\n` +
                      `• **Débit** : Haut débit Gigabit 1000 Mbps\n` +
                      `• **Usage** : Connexion internet stable pour routeurs, PC, Switch et caméras.`;
-        return envoyerProduitAvecPhoto(msg, ['cable internet'], desc);
+        return envoyerProduitAvecCatalogue(msg, desc);
     }
 
     // MESSAGE PAR DÉFAUT
@@ -311,3 +274,4 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
+            
