@@ -11,6 +11,9 @@ const port = 3000;
 let qrCodeData = '';
 const pausesAgents = new Map();
 
+// Adresse complète de la boutique
+const ADRESSE_BOUTIQUE = "📍 *Adresse* : Avenue de la Gombe (croisement Colonel Ebeya et Tombalbaye), Gombe, Kinshasa";
+
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -56,7 +59,7 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => console.log(`🌐 Serveur Web sur le port ${port}`));
 
-// Fonction d'envoi ultra-sécurisée en Base64
+// Fonction d'envoi avec photo, description et options de livraison/bureau
 async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
     const extensions = ['.jfif', '.jpg', '.JPG', '.png', '.jpeg'];
     let cheminTrouve = null;
@@ -72,23 +75,31 @@ async function envoyerProduitAvecPhoto(msg, nomsPossibles, description) {
         if (cheminTrouve) break;
     }
 
-    const noteLivraison = `\n\n🚚 *Livraison* : 5$ partout à Kinshasa ou retrait direct à notre bureau à Gombe.\n✍️ *Tapez 5 pour passer commande auprès d'un conseiller.*`;
+    const optionsAchat = `\n\n` +
+                         `-----------------------------------\n` +
+                         `🛍️ *COMMENT ACHETER ?*\n` +
+                         `1️⃣ **Livraison** : 5$ partout à Kinshasa (reçu chez vous ou au bureau).\n` +
+                         `2️⃣ **Retrait sur place** : Venez directement à notre bureau.\n` +
+                         `${ADRESSE_BOUTIQUE}\n\n` +
+                         `✍️ *Tapez 5 pour parler à un conseiller et valider votre choix (livraison ou retrait).*`;
+
+    const texteFinal = description + optionsAchat;
 
     if (cheminTrouve) {
         try {
-            const bitmap = fs.readFileSync(cheminTrouve);
-            const base64Data = bitmap.toString('base64');
-            let mimeType = 'image/jpeg';
-            if (cheminTrouve.endsWith('.png')) mimeType = 'image/png';
+            const fileData = fs.readFileSync(cheminTrouve);
+            const base64Image = fileData.toString('base64');
+            const media = new MessageMedia('image/jpeg', base64Image, 'produit.jpg');
 
-            const media = new MessageMedia(mimeType, base64Data, path.basename(cheminTrouve));
-            await client.sendMessage(msg.from, media, { caption: description + noteLivraison });
+            await client.sendMessage(msg.from, media, { caption: texteFinal });
+            console.log(`🖼️ [IMAGE ENVOYÉE] : ${cheminTrouve}`);
         } catch (error) {
-            console.error("Erreur d'envoi média en base64, envoi du texte seul :", error);
-            await client.sendMessage(msg.from, description + noteLivraison);
+            console.error("Erreur envoi image :", error);
+            await client.sendMessage(msg.from, texteFinal);
         }
     } else {
-        await client.sendMessage(msg.from, description + noteLivraison);
+        console.log(`⚠️ Aucune image trouvée pour : ${nomsPossibles.join(', ')}`);
+        await client.sendMessage(msg.from, texteFinal);
     }
 }
 
@@ -116,16 +127,16 @@ client.on('message', async (msg) => {
     const texte = msg.body.toLowerCase().trim();
     console.log(`💬 [CLIENT] Message de ${msg.from} : ${msg.body}`);
 
-    // OPTION AGENT HUMAIN (5)
+    // OPTION AGENT HUMAIN / COMMANDE (5)
     if (texte === '5' || texte.includes('agent') || texte.includes('humain') || texte.includes('conseiller') || texte.includes('commander')) {
         pausesAgents.set(msg.from, maintenant + 3600000);
         return client.sendMessage(msg.from, 
             `👤 *MISE EN RELATION AVEC UN CONSEILLER*\n\n` +
-            `Merci d'avoir contacté *Christech Business* !\n` +
-            `Un conseiller prend le relais. Le bot est suspendu pendant 1h sur cette discussion.\n\n` +
-            `📍 *Bureau* : Gombe, Kinshasa\n` +
-            `🚚 *Livraison* : 5$ à domicile ou au bureau partout à Kinshasa.\n\n` +
-            `Posez directement votre question ou indiquez votre commande ci-dessous ! 📝`
+            `Merci d'avoir choisi *Christech Business* !\n` +
+            `Un conseiller prend le relais pour enregistrer votre commande.\n\n` +
+            `${ADRESSE_BOUTIQUE}\n` +
+            `🚚 *Livraison* : 5$ partout à Kinshasa.\n\n` +
+            `Indiquez à notre conseiller si vous optez pour la **livraison** ou le **retrait au bureau**, ainsi que votre adresse exacte ! 📝`
         );
     }
 
@@ -133,8 +144,9 @@ client.on('message', async (msg) => {
     if (texte.includes('bonjour') || texte.includes('salut') || texte.includes('mbote') || texte.includes('bonsoir') || texte.includes('hello')) {
         return client.sendMessage(msg.from, 
             `👋 *Bonjour et bienvenue chez Christech Business !*\n\n` +
-            `Vente d'appareils et matériel informatique de qualité à Kinshasa (Gombe). 💻🖱️\n\n` +
-            `🚚 *Livraison* : Disponible à 5$ dans toutes les communes de Kinshasa ou passage en magasin à Gombe.\n\n` +
+            `Vente d'appareils et matériel informatique de qualité à Kinshasa. 💻🖱️\n\n` +
+            `${ADRESSE_BOUTIQUE}\n\n` +
+            `🚚 *Livraison* : 5$ dans toutes les communes de Kinshasa ou retrait gratuit au bureau.\n\n` +
             `Tapez *menu* pour consulter nos produits et tarifs !`
         );
     }
@@ -148,10 +160,10 @@ client.on('message', async (msg) => {
             `⌨️ 2️⃣ *Claviers* (Avec fil / Sans fil)\n` +
             `🖱️ 3️⃣ *Souris* (Avec fil / Sans fil)\n` +
             `🔌 4️⃣ *Matériel Réseau*\n` +
-            `👤 5️⃣ *Parler à un conseiller / Commander*\n` +
+            `👤 5️⃣ *Parler à un conseiller / Valider une commande*\n` +
             `-----------------------------------\n` +
-            `💡 *Information livraison* : Nous livrons partout à Kinshasa pour 5$ seulement ! Vous pouvez aussi retirer votre commande à notre bureau de Gombe.\n\n` +
-            `✍️ *Répondez avec un numéro (1, 2, 3...) pour voir nos articles !*`
+            `${ADRESSE_BOUTIQUE}\n\n` +
+            `✍️ *Répondez avec un numéro (1, 2, 3...) pour voir nos articles en photo !*`
         );
     }
 
@@ -199,7 +211,7 @@ client.on('message', async (msg) => {
             `Choisissez votre type de clavier :\n\n` +
             `21️⃣ *Clavier USB avec fil*\n` +
             `22️⃣ *Clavier Sans Fil (Bluetooth / 2.4G)*\n\n` +
-            `👉 *Tapez 21 ou 22 pour voir les détails.*`
+            `👉 *Tapez 21 ou 22 pour voir la photo et les détails.*`
         );
     }
 
@@ -230,7 +242,7 @@ client.on('message', async (msg) => {
             `Choisissez votre type de souris :\n\n` +
             `31️⃣ *Souris Optique avec fil*\n` +
             `32️⃣ *Souris Ergonomique Sans Fil*\n\n` +
-            `👉 *Tapez 31 ou 32 pour faire votre choix.*`
+            `👉 *Tapez 31 ou 32 pour voir la photo et les détails.*`
         );
     }
 
@@ -286,9 +298,10 @@ client.on('message', async (msg) => {
     // MESSAGE PAR DÉFAUT
     await client.sendMessage(msg.from, 
         `🤖 *Christech Business* (Gombe, Kinshasa)\n\n` +
+        `${ADRESSE_BOUTIQUE}\n\n` +
         `Tapez *menu* pour consulter le catalogue ou *5* pour discuter avec un conseiller.`
     );
 });
 
 client.initialize();
-        
+            
